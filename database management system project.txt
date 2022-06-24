@@ -1,0 +1,306 @@
+﻿--------------------------------------------------------------------
+TAO CAC BANG TRONG DATABASE
+---------------------------------------------------------------------
+
+------------------------------TAO BANG MONTAP------------------------
+CREATE TABLE MONTAP
+(
+   	MAMT VARCHAR2(5),
+   	TENMT VARCHAR2(32),
+   	PHONG VARCHAR2(5),
+   	TGTAP VARCHAR2(10),
+    	MANV VARCHAR2(5),
+   	PRIMARY KEY (MAMT)
+);
+------------------------------TAO BANG DICHVU------------------------
+CREATE TABLE DICHVU
+(
+   	MADV VARCHAR2(5),
+   	TENDV VARCHAR2(32),
+   	THOIHAN VARCHAR2(10),
+   	SLBT NUMBER,
+    	CHIPHI CHAR(10),
+    	MAMT VARCHAR2(5),
+    	MAHLV VARCHAR2(5),
+    	MANV VARCHAR2(5),
+   	PRIMARY KEY (MADV)
+);
+ ------------------------------TAO BANG HLV ------------------------
+CREATE TABLE HLV 
+(
+    	MAHLV VARCHAR2(5),
+   	TENHLV VARCHAR2(32),
+   	NGSINH VARCHAR2(10),
+    	SĐT VARCHAR2(10), 
+    	GIOITINH VARCHAR2(5), 
+    	DIACHI VARCHAR2(50), 
+   	MANV VARCHAR2(5),
+   	PRIMARY KEY (MAHLV)
+);
+ ------------------------------TAO BANG NHANVIEN------------------------
+CREATE TABLE NHANVIEN
+(
+    	MANV VARCHAR2(5), 
+    	TENNV VARCHAR2(32), 
+    	NGSINH VARCHAR2(10), 
+    	SĐT VARCHAR2(10), 
+    	GIOITINH VARCHAR2(5), 
+    	DIACHI VARCHAR2(50), 
+    	LOAI VARCHAR2(10),
+   	PRIMARY KEY (MANV)
+);
+ ------------------------------TAO BANG KHACHHANG------------------------
+CREATE TABLE KHACHHANG
+(
+   	MAKH VARCHAR2(5), 
+    	TENKH VARCHAR2(32), 
+    	NGSINH VARCHAR2(10),
+    	SĐT VARCHAR2(10), 
+    	GIOITINH VARCHAR2(5), 
+    	DIACHI VARCHAR2(50), 
+    	LOAI VARCHAR2(10),
+   	PRIMARY KEY (MAKH)
+);
+ ------------------------------TAO BANG VETAP------------------------
+CREATE TABLE VETAP
+(
+    MAKH VARCHAR2(5), 
+    MAMT VARCHAR2(5), 
+    NGMUA VARCHAR2(10),
+    PRIMARY KEY (MAKH, MAMT)
+);
+------------------------------TAO BANG VEDV------------------------
+CREATE TABLE VEDV
+(
+    MAKH VARCHAR2(5), 
+    MADV VARCHAR2(5), 
+    NGDKDV VARCHAR2(10),
+    PRIMARY KEY (MAKH, MADV)
+);
+------------------------------TAO BANG THETU------------------------
+CREATE TABLE THETU
+(
+    MAKH VARCHAR2(5), 
+    MANV VARCHAR2(5), 
+    SOBT NUMBER, 
+    KYHAN VARCHAR2(10), 
+    NGMOTHE VARCHAR2(10),
+    PRIMARY KEY (MAKH, MANV)
+);
+-------------------------RANG BUOC KHOA NGOAI---------------------------------------
+ALTER TABLE DICHVU
+ADD CONSTRAINT FK_DICHVU_MONTAP FOREIGN KEY (MAMT) REFERENCES MONTAP (MAMT)
+
+ALTER TABLE DICHVU
+ADD CONSTRAINT FK_DICHVU_HLV FOREIGN KEY (MAHLV) REFERENCES HLV (MAHLV)
+
+ALTER TABLE VETAP
+ADD CONSTRAINT FK_VETAP_MONTAP FOREIGN KEY (MAMT) REFERENCES MONTAP (MAMT)
+
+ALTER TABLE VEDV
+ADD CONSTRAINT FK_VEDV_DICHVU FOREIGN KEY (MADV) REFERENCES DICHVU (MADV)
+
+ALTER TABLE MONTAP
+ADD CONSTRAINT FK_MONTAP_NHANVIEN FOREIGN KEY (MANV) REFERENCES NHANVIEN (MANV)
+
+ALTER TABLE DICHVU
+ADD CONSTRAINT FK_DICHVU_NHANVIEN FOREIGN KEY (MANV) REFERENCES NHANVIEN (MANV)
+
+ALTER TABLE HLV
+ADD CONSTRAINT FK_HLV_NHANVIEN FOREIGN KEY (MANV) REFERENCES NHANVIEN (MANV)
+
+ALTER TABLE THETU
+ADD CONSTRAINT FK_THETU_NHANVIEN FOREIGN KEY (MANV) REFERENCES NHANVIEN (MANV)
+
+ALTER TABLE VETAP
+ADD CONSTRAINT FK_VETAP_KHACHHANG FOREIGN KEY (MAKH) REFERENCES KHACHHANG (MAKH)
+
+ALTER TABLE VEDV
+ADD CONSTRAINT FK_VEDV_KHACHHANG FOREIGN KEY (MAKH) REFERENCES KHACHHANG (MAKH)
+
+ALTER TABLE THETU
+ADD CONSTRAINT FK_THETU_KHACHHANG FOREIGN KEY (MAKH) REFERENCES KHACHHANG (MAKH)
+
+
+---------------------------------------------------------------------------------
+                          TAO CAC STORED PROCEDURE 
+--------------------------------------------------------------------------------
+
+CREATE OR REPLACE PROCEDURE SHOW_MONTAP (p_makh IN KHACHHANG.MAKH%TYPE)
+AS
+BEGIN
+FOR list_info IN (SELECT * FROM VETAP JOIN MONTAP ON VETAP.MAMT = MONTAP.MAMT
+                                WHERE VETAP.MAKH = p_makh)
+LOOP 
+    dbms_output.put_line('Ten mon tap: '||list_info.TENMT);
+    dbms_output.put_line('Phong: '||list_info.PHONG);
+    dbms_output.put_line('Thoi gian: '||list_info.TGTAP);
+    dbms_output.put_line('---------------------');
+END LOOP;
+EXCEPTION
+    WHEN no_data_found THEN
+        dbms_output.put_line('KHACH HANG NAY KHONG TON TAI');
+END SHOW_MONTAP;
+
+--------------------------------------------------------------------------------
+create or replace PROCEDURE SHOW_DICHVU (p_makh IN KHACHHANG.MAKH%TYPE) 
+AS
+BEGIN
+FOR list_dv IN (SELECT * FROM VEDV JOIN DICHVU ON DICHVU.MADV = VEDV.MADV
+                                WHERE VEDV.MAKH = p_makh)
+LOOP dbms_output.put_line(list_dv.TENDV);
+END LOOP;
+EXCEPTION
+    WHEN no_data_found THEN
+        dbms_output.put_line('KHACH HANG NAY KHONG TON TAI');
+END SHOW_DICHVU;
+--------------------------------------------------------------------------------
+CREATE OR REPLACE PROCEDURE SHOW_THETU (p_makh   IN   KHACHHANG.MAKH%TYPE)
+AS
+BEGIN
+FOR the_tu IN (SELECT *FROM THETU WHERE MAKH = p_makh)
+LOOP
+DBMS_OUTPUT.PUT_LINE ('THONG TIN THE TU: '||'Ma NV: '||the_tu.MANV ||', So BT: '||the_tu.SOBT ||',  Ky han: '||the_tu.KYHAN|| ', Ngay mo the: '||the_tu.NGMOTHE);
+END LOOP;
+END;
+--------------------------------------------------------------------------------
+CREATE OR REPLACE PROCEDURE SHOW_MT_DV (p_mamt   IN   MONTAP.MAMT%TYPE)
+AS
+BEGIN
+FOR mt_dv IN (SELECT *FROM DICHVU WHERE MAMT = p_mamt)
+LOOP
+DBMS_OUTPUT.PUT_LINE( 'Goi dich vu cua mon tap: '||mt_dv.mamt ||' la '||mt_dv.tendv);
+END LOOP;
+END;
+--------------------------------------------------------------------------------
+CREATE OR REPLACE PROCEDURE SHOW_HLV_DV (p_mahlv   IN   HLV.MAHLV%TYPE)
+AS
+BEGIN
+FOR hlv_dv IN (SELECT *FROM DICHVU WHERE MAHLV = p_mahlv  )
+LOOP
+DBMS_OUTPUT.PUT_LINE( 'Goi dich vu cua HLV: '|| hlv_dv.mahlv ||' la '|| hlv_dv.tendv);
+END LOOP;
+END;
+--------------------------------------------------------------------------------
+create or replace PROCEDURE SHOW_NHANVIEN_MONTAP (p_manv IN NHANVIEN.MANV%TYPE)
+AS
+BEGIN
+FOR list_tenmt IN (SELECT * FROM MONTAP WHERE MANV = p_manv)
+LOOP dbms_output.put_line(list_tenmt.TENMT);
+END LOOP;
+EXCEPTION
+    WHEN no_data_found THEN
+        dbms_output.put_line('NHAN VIEN NAY KHONG TON TAI');
+END SHOW_NHANVIEN_MONTAP;
+--------------------------------------------------------------------------------
+create or replace PROCEDURE SHOW_NHANVIEN_DICHVU (p_manv IN NHANVIEN.MANV%TYPE)
+AS
+BEGIN
+FOR list_tendv IN (SELECT * FROM DICHVU WHERE MANV = p_manv)
+LOOP dbms_output.put_line(list_tendv.TENDV);
+END LOOP;
+EXCEPTION
+    WHEN no_data_found THEN
+        dbms_output.put_line('NHAN VIEN NAY KHONG TON TAI');
+END SHOW_NHANVIEN_DICHVU;
+--------------------------------------------------------------------------------
+create or replace PROCEDURE SHOW_NHANVIEN_HLV(p_manv IN NHANVIEN.MANV%TYPE)
+AS
+BEGIN
+FOR list_tenhlv IN (SELECT * FROM HLV WHERE MANV = p_manv)
+LOOP dbms_output.put_line(list_tenhlv.TENHLV);
+END LOOP;
+EXCEPTION
+    WHEN no_data_found THEN
+        dbms_output.put_line('NHAN VIEN NAY KHONG TON TAI');
+END SHOW_NHANVIEN_HLV;
+--------------------------------------------------------------------------------
+create or replace PROCEDURE SHOW_NHANVIEN_THETU(p_manv IN NHANVIEN.MANV%TYPE)
+AS
+BEGIN
+FOR list_tenthetu IN (SELECT * FROM THETU WHERE MANV = p_manv)
+LOOP dbms_output.put_line('THONG TIN THE TU: '||'Ma NV: '||list_tenthetu.MANV ||', So BT: '||list_tenthetu.SOBT ||',  Ky han: '||list_tenthetu.KYHAN|| ', Ngay mo the: '||list_tenthetu.NGMOTHE);
+END LOOP;
+EXCEPTION
+    WHEN no_data_found THEN
+        dbms_output.put_line('NHAN VIEN NAY KHONG TON TAI');
+END SHOW_NHANVIEN_THETU;
+--------------------------------------------------------------------------------
+CREATE OR REPLACE TRIGGER T1 
+AFTER INSERT  OR UPDATE ON KHACHHANG 
+FOR EACH ROW
+BEGIN
+IF(:NEW.LOAI != 'HOI VIEN' AND :NEW.LOAI != 'KHACH HANG') THEN RAISE_APPLICATION_ERROR (-20000, 'NHAP SAI, MOI NHAP LAI!');
+ELSIF 
+END IF;
+END;
+--------------------------------------------------------------------------------
+CREATE OR REPLACE TRIGGER T2 
+BEFORE INSERT  OR UPDATE ON NHANVIEN 
+FOR EACH ROW
+BEGIN
+IF (:NEW.LOAI != 'NHAN VIEN' AND :NEW.LOAI != 'QUAN LY') THEN RAISE_APPLICATION_ERROR (-20000, 'NHAP SAI, MOI NHAP LAI!');
+END IF;
+END;
+--------------------------------------------------------------------------------
+CREATE OR REPLACE PROCEDURE TONG_BUOITAP (p_makh IN KHACHHANG.MAKH%TYPE, p_new OUT THETU.SOBT%TYPE)
+AS
+BEGIN
+    UPDATE THETU SET SOBT = THETU.SOBT + p_new WHERE THETU.MAKH = p_makh;
+    dbms_output.put_line('CAP NHAT THANH CONG ');
+EXCEPTION
+    WHEN no_data_found THEN
+        dbms_output.put_line('KHACH HANG NAY KHONG TON TAI');
+END TONG_BUOITAP;
+
+
+--------------------------------------------------------------------------------
+INSERT DU LIEU VAO DATABASE
+--------------------------------------------------------------------------------
+INSERT INTO MONTAP VALUES ('MT01','YOGA','01','5H PM','NV01')
+INSERT INTO MONTAP VALUES ('MT02','GYM','02','5H AM','NV02')
+INSERT INTO MONTAP VALUES ('MT03','FITNESS','03','5H AM','NV03')
+INSERT INTO MONTAP VALUES ('MT04','STRENGTHEN','04','5H AM','NV01')
+INSERT INTO MONTAP VALUES ('MT05','CARDIO','05','5H PM','NV02')
+------------------------------------------------------------------------------------------------------
+INSERT INTO DICHVU VALUES ('DV01', 'GOI DONG', '31 NGAY', '28', '200.000', 'MT01', 'HLV01', 'NV01')
+INSERT INTO DICHVU VALUES ('DV02', 'GOI BAC', '62 NGAY', '56', '500.000', 'MT02', 'HLV02', 'NV02')
+INSERT INTO DICHVU VALUES ('DV03', 'GOI VANG', '150 NGAY', '100', '500.000', 'MT03', 'HLV03', 'NV03')
+INSERT INTO DICHVU VALUES ('DV04', 'GOI PREMIUM', '6 THANG', '150', '300.000', 'MT04', 'HLV04', 'NV04')
+INSERT INTO DICHVU VALUES ('DV05', 'GOI VIP', '1 NAM', '200','600.000', 'MT05', 'HLV05', 'NV05')
+---------------------------------------------------------------------------------------------------------
+INSERT INTO HLV VALUES ('HLV01', 'DANG MINH QUAN', '20-02-2001', '0156789', 'NAM', 'QUANG NAM', 'NV01')
+INSERT INTO HLV VALUES ('HLV02', 'NGUYEN VAN LUC', '19-01-2001', '0397777', 'NAM', 'DAK LAK', 'NV02')
+INSERT INTO HLV VALUES ('HLV03', 'LE VAN ANH DUC', '5-02-2001', '1569890', 'NAM', 'QUANG TRI', 'NV03')
+INSERT INTO HLV VALUES ('HLV04', 'DUONG DUC DAO', '11-11-2001', '25458900', 'NAM', 'BIEN HOA', 'NV04')
+INSERT INTO HLV VALUES ('HLV05', 'PHAM QUOC DUY HUNG', '22-11-2001', '2999777', 'NAM', 'NHA TRANG', 'NV05')
+---------------------------------------------------------------------------------------------------------
+INSERT INTO NHANVIEN VALUES ('NV01', 'SAO MAI XINH DEP', '01-01-2000', '123456789', 'NU', 'DA LAT', 'QUAN LY')
+INSERT INTO NHANVIEN VALUES ('NV02', 'LE QUANG KHAI', '18-01-2001', '0935959875', 'NAM', 'GIA LAI', 'NHAN VIEN')
+INSERT INTO NHANVIEN VALUES ('NV03', 'LE THANH HIEU', '22-02-2001', '215466356', 'NAM', 'TP HCM', 'NHAN VIEN')
+INSERT INTO NHANVIEN VALUES ('NV04', 'LY TRAN THANH THAO', '02-02-2001', '111111111', 'NU', 'BINH DINH', 'NHAN VIEN')
+INSERT INTO NHANVIEN VALUES ('NV05', 'PHUNG THANH DO', '02-02-1989', '22555888', 'NAM', 'CAO BANG', 'NHAN VIEN')
+---------------------------------------------------------------------------------------------------------
+INSERT INTO KHACHHANG VALUES ('KH01', 'FAKER', '11-11-2000', '258899522', 'NAM', 'HAN QUOC', 'HOI VIEN')
+INSERT INTO KHACHHANG VALUES ('KH02', 'SHOWMAKER', '11-02-2000', '12222222', 'NAM', 'HAN QUOC', 'HOI VIEN')
+INSERT INTO KHACHHANG VALUES ('KH03', 'CHOOVY', '22-03-2000', '5563322100', 'NAM', 'TRUNG QUOC', 'KHACH HANG')
+INSERT INTO KHACHHANG VALUES ('KH04', 'TEDDY', '31-12-2001', '2216565000', 'NAM', 'HAN QUOC', 'KHACH HANG')
+INSERT INTO KHACHHANG VALUES ('KH05', 'ROOKIE', '11-12-2001', '2366545800', 'NAM', 'TRUNG QUOC', 'KHACH HANG')
+-------------------------------------------------------------------------------------------------------------
+INSERT INTO VETAP VALUES ('KH01', 'MT01', '19-01-2021')
+INSERT INTO VETAP VALUES ('KH02', 'MT02', '18-01-2021')
+INSERT INTO VETAP VALUES ('KH03', 'MT03', '21-01-2021')
+INSERT INTO VETAP VALUES ('KH04', 'MT04', '11-01-2021')
+INSERT INTO VETAP VALUES ('KH05', 'MT05', '30-01-2021')
+--------------------------------------------------------------------------------------------------------------
+INSERT INTO VEDV VALUES ('KH01', 'DV01', '19-01-2021')
+INSERT INTO VEDV VALUES ('KH02', 'DV02', '19-02-2021')
+INSERT INTO VEDV VALUES ('KH03', 'DV03', '19-03-2021')
+INSERT INTO VEDV VALUES ('KH04', 'DV04', '18-01-2021')
+INSERT INTO VEDV VALUES ('KH05', 'DV05', '18-02-2021')
+--------------------------------------------------------------------------------------------------------------
+INSERT INTO THETU VALUES ('KH01', 'NV01', '28', '31 NGAY', '19-01-2021')
+INSERT INTO THETU VALUES ('KH02', 'NV01', '100', '6 THANG', '20-01-2021')
+INSERT INTO THETU VALUES ('KH03', 'NV03', '150', '1 NAM', '02-02-2021')
+INSERT INTO THETU VALUES ('KH04', 'NV04', '150', '1 NAM', '02-03-2021')
+INSERT INTO THETU VALUES ('KH05', 'NV05', '100', '6 THANG', '05-06-2021')
